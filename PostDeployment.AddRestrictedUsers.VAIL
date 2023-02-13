@@ -1,0 +1,39 @@
+package com.vantiqse
+
+/* 
+	This procedure adds any non admin user to the restricted users list
+	in a Web Application For Mobile Use. 
+    
+  Note: this will only add users who are homed (registered) in this namespace. 
+*/
+
+import service Utils
+
+PROCEDURE PostDeployment.AddRestrictedUsers()
+
+var restrictedUsers = []
+SELECT username, preferredUsername, profiles FROM system.users AS record{
+    // create a list of user to add to restricted users
+    var obj = record.username
+	var dontAdd = Context.namespace() + ".admin"
+    
+	var isAdmin = false
+	for item in record.profiles{
+    	if (item == dontAdd){
+            isAdmin = true
+        }    
+	}
+
+	if (!isAdmin){
+        restrictedUsers.push(obj)
+	}
+}
+
+
+select ONE from system.clients as client where name == "<NAME OF CLIENT>"
+client.userList = restrictedUsers
+
+client = Utils.stripSystemProperties(client)
+
+UPDATE system.clients(client) WHERE _id == client._id
+
